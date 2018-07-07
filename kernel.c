@@ -1,17 +1,14 @@
 void main(){
 	cls();
-	printf("==========================================================\n\r");
-	printf("S A N D E R S L A N D O   O P E R A T I N G   S Y S T E M \n\r");
-	printf("==========================================================\n\r");
 	char* filelist = getFileList();
 	int alpha = choose(filelist);
 	cls();
-	if(loadFileByID(alpha)){
+	char* buffer = (char*) 0x5000;
+	if(loadFileByID(alpha,buffer)){
 		alpha = choose("Bekijken;Uitvoeren;Terug");
 		cls();
 		if(alpha==0){
 			int base = 0;
-			char* buffer = (char*) 0x5000;
 			while(1){
 				setTitle("Viewer","+ volgende 512 | - vorige 512 | e terug");
 				for(int i = 0 ; i < 512 ; i++){
@@ -35,7 +32,7 @@ void main(){
 	for(;;);
 }
 
-char loadFileByID(int number){
+char loadFileByID(int number,char* targetbuff){
 	char* buffer = (char*) 0x1000;
 	if(readSectorsDeviceLBA(1,0,19,buffer)){
 		int index = 0;
@@ -52,7 +49,7 @@ char loadFileByID(int number){
 				index++;
 			}
 		}
-		return readSectorsDeviceLBA((andere/512)+1,0,deze+31,0x5000);
+		return readSectorsDeviceLBA((andere/512)+1,0,deze+31,targetbuff);
 	}
 	return 0x00;
 }
@@ -98,7 +95,7 @@ int choose(char* alpha){
 			if(pointer!=rowpointer){
 				pointer++;
 			}
-		}else if(et==13){
+		}else if(et==0x1C){
 			break;
 		}
 	}

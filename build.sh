@@ -18,12 +18,17 @@ smlrc kernel.c kernel.asm || exit
 echo ">> Compiling kernel"
 nasm -O0 -w+orphan-labels -f bin -o kernel.bin entrypoint.asm || exit
 
+echo ">> Compiling programs"
+echo "   > Poweroff"
+nasm -O0 -w+orphan-labels -f bin -o poweroff.bin poweroff.asm || exit
+
 echo ">> Copy system"
 rm -rf mountpoint
 mkdir mountpoint
 
 sudo mount -o loop -t vfat floppy.flp mountpoint
 sudo cp kernel.bin mountpoint/kernel.bin
+sudo cp poweroff.bin mountpoint/poweroff.bin
 sudo umount mountpoint
 
 rm -rf mountpoint
