@@ -1,9 +1,20 @@
 void main(){
+	unsigned char* buffer = (unsigned char*) 0x5000;
+//	int tty = fopen("POWEROFFBIN",buffer);
+//	if(tty){
+//		printf("GELUKT");
+//		for(int i = 0 ; i < 512 ; i++){
+//			putc(buffer[i]);
+//		}
+//	}else{
+//		printf("MISLUKT");
+//	}
+//	getc();
+	hideCursor();
 	cls();
 	char* filelist = getFileList();
 	int alpha = choose(filelist);
 	cls();
-	char* buffer = (char*) 0x5000;
 	if(loadFileByID(alpha,buffer)){
 		alpha = choose("Bekijken;Uitvoeren;Terug");
 		cls();
@@ -32,7 +43,48 @@ void main(){
 	for(;;);
 }
 
-char loadFileByID(int number,char* targetbuff){
+
+void hideCursor(){
+	asm("mov ch, 32");
+	asm("mov ah, 1");
+	asm("mov al, 3");
+	asm("int 10h");
+}
+
+char fopen(char* filename,void *location){
+	char* filelist = getFileList();
+	int probing = 0;
+	int insmod = 0;
+	while(1){
+		char thx = filelist[insmod];
+		if(thx==0x00){
+			return 0x00;
+		}
+		int tmp = 1;
+		for(int i = 0 ; i < 11 ; i++){
+			char X = filelist[insmod++];
+			char Y = filename[i];
+			if(X!=Y){
+				tmp = 0;
+			}
+		}
+		if(tmp==1){
+			goto second;
+		}
+		char X = filelist[insmod++];
+		if(X==0x00){
+			return 0x00;
+		}
+		probing++;
+	}
+	return 0x00;
+	second:
+	return loadFileByID(probing,location);
+}
+
+char fwrite(char* filename,void *location,int size){}
+
+char loadFileByID(int number,void *targetbuff){
 	char* buffer = (char*) 0x1000;
 	if(readSectorsDeviceLBA(1,0,19,buffer)){
 		int index = 0;
@@ -58,7 +110,7 @@ int choose(char* alpha){
 	int pointer = 0;
 	while(1){
 		cls();
-		setTitle("Selecteer een optie","Pijltjestoetsen: Navigeer | 9 : Selecteer");
+		setTitle("Selecteer een optie","Pijltjestoetsen: Navigeer | ENTER : Selecteer");
 		draw(pointer+1,0,0x70,80);
 		curpos(1,0);
 		int rowpointer = 0;
