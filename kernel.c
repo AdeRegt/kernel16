@@ -1,15 +1,5 @@
 void main(){
 	unsigned char* buffer = (unsigned char*) 0x5000;
-//	int tty = fopen("POWEROFFBIN",buffer);
-//	if(tty){
-//		printf("GELUKT");
-//		for(int i = 0 ; i < 512 ; i++){
-//			putc(buffer[i]);
-//		}
-//	}else{
-//		printf("MISLUKT");
-//	}
-//	getc();
 	hideCursor();
 	cls();
 	char* filelist = getFileList();
@@ -51,7 +41,42 @@ void hideCursor(){
 	asm("int 10h");
 }
 
-char fopen(char* filename,void *location){
+char fexists(char* filename){
+	char* filelist = getFileList();
+	int probing = 0;
+	int insmod = 0;
+	while(1){
+		char thx = filelist[insmod];
+		if(thx==0x00){
+			return 0x00;
+		}
+		int tmp = 1;
+		for(int i = 0 ; i < 11 ; i++){
+			char X = filelist[insmod++];
+			char Y = filename[i];
+			if(X!=Y){
+				tmp = 0;
+			}
+		}
+		if(tmp==1){
+			goto second;
+		}
+		char X = filelist[insmod++];
+		if(X==0x00){
+			return 0x00;
+		}
+		probing++;
+	}
+	return 0x00;
+	second:
+	return 0x01;
+}
+
+char fnew(char* filename){
+	return 0x00;
+}
+
+char fread(char* filename,void *location){
 	char* filelist = getFileList();
 	int probing = 0;
 	int insmod = 0;
@@ -82,7 +107,67 @@ char fopen(char* filename,void *location){
 	return loadFileByID(probing,location);
 }
 
-char fwrite(char* filename,void *location,int size){}
+char fwrite(char* filename,void *location,int size){
+	if(fexists(filename)==0){
+		fnew(filename);
+	}
+	char* filelist = getFileList();
+	int probing = 0;
+	int insmod = 0;
+	while(1){
+		char thx = filelist[insmod];
+		if(thx==0x00){
+			return 0x00;
+		}
+		int tmp = 1;
+		for(int i = 0 ; i < 11 ; i++){
+			char X = filelist[insmod++];
+			char Y = filename[i];
+			if(X!=Y){
+				tmp = 0;
+			}
+		}
+		if(tmp==1){
+			goto second;
+		}
+		char X = filelist[insmod++];
+		if(X==0x00){
+			return 0x00;
+		}
+		probing++;
+	}
+	return 0x00;
+	second:
+	return writeFileByID(probing,location,size);
+}
+
+char writeFileByID(int number,void *targetbuff,int size){
+	char* buffer = (char*) 0x1000;
+	if(readSectorsDeviceLBA(1,0,19,buffer)){
+		int index = 0;
+		char deze = 0x00;
+		int andere = 0;
+		for(int i = 1 ; i < 20 ; i++){
+			int semaphore = i*32;
+			if(buffer[semaphore+11]!=0x0f){
+				if(number==index){
+					deze = buffer[semaphore+26];
+					andere = buffer[semaphore+28];
+					break;
+				}
+				index++;
+			}
+		}
+		int prosizeA = (andere/512)+1;
+		int prosizeB = (size/512)+1;
+		if(prosizeB==prosizeA){
+			return writeSectorsDeviceLBA((andere/512)+1,0,deze+31,targetbuff);
+		}else{
+			printf("__SIZE DIFFERENT__");
+		}
+	}
+	return 0x00;
+}
 
 char loadFileByID(int number,void *targetbuff){
 	char* buffer = (char*) 0x1000;
@@ -200,6 +285,15 @@ char* getFileList(){
 	return filebuffer;
 }
 
+char writeSectorsDeviceLBA(char sectorcount,char device,int lba,void *buffer){
+	char head = 0;
+	char track = 0;
+	char sector = 0;
+	head = (lba % (18 * 2)) / 18;
+	track = (lba / (18 * 2));
+	sector = (lba % 18 + 1);
+	writeSectorsDevice(sectorcount,track,sector,head,device,buffer);
+}
 
 char readSectorsDeviceLBA(char sectorcount,char device,int lba,void *buffer){
 	char head = 0;
@@ -241,6 +335,28 @@ char readSectorsDevice(char sectorcount,char cylinder,char sector,char head,char
 		asm("mov es, bx");
 		asm("mov bx, si");
 		asm("mov ah, 0x02");
+		asm("mov al, [bp+4]");
+		asm("mov ch, [bp+6]");
+		asm("mov cl, [bp+8]");
+		asm("mov dh, [bp+10]");
+		asm("mov dl, [bp+12]");
+		asm("int 0x13");
+		asm("jc .skip");
+		return 0x01;
+		asm(".skip:");
+		return 0x00;
+	}else{
+		return 0x00;
+	}
+}
+
+char writeSectorsDevice(char sectorcount,char cylinder,char sector,char head,char device,void *buffer){
+	if(resetDevice(device)){
+		asm("mov si, [bp+14]");
+		asm("mov bx, ds");
+		asm("mov es, bx");
+		asm("mov bx, si");
+		asm("mov ah, 0x03");
 		asm("mov al, [bp+4]");
 		asm("mov ch, [bp+6]");
 		asm("mov cl, [bp+8]");
