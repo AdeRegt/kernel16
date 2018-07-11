@@ -1,6 +1,11 @@
 # kernel16
 A 16bit operatingsystem written in C
 
+#Requirements:
+Nasm - https://www.nasm.us/
+smlrc - https://github.com/alexfru/SmallerC/tree/master/v0100/binm
+
+#Distribution:
 ## Linux 
 ### Build
 ```

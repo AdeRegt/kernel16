@@ -1,3 +1,4 @@
+// mainloop
 void main(){
 	unsigned char* buffer = (unsigned char*) 0x5000;
 	hideCursor();
@@ -6,12 +7,12 @@ void main(){
 	int alpha = choose(filelist);
 	cls();
 	if(loadFileByID(alpha,buffer)){
-		alpha = choose("Bekijken;Uitvoeren;Terug");
+		alpha = choose("View;Execute;Back");
 		cls();
 		if(alpha==0){
 			int base = 0;
 			while(1){
-				setTitle("Viewer","+ volgende 512 | - vorige 512 | e terug");
+				setTitle("Viewer","+ Next 512 | - Previous 512 | e Return");
 				for(int i = 0 ; i < 512 ; i++){
 					putc(buffer[base+i]);
 				}
@@ -21,8 +22,8 @@ void main(){
 				if(x=='e'){asm("jmp _main");}
 			}
 		}else if(alpha==1){
+			curpos(1,1);
 			asm("call 0x5000");
-			getc();
 		}else if(alpha==2){
 		
 		}
@@ -33,7 +34,7 @@ void main(){
 	for(;;);
 }
 
-
+// hides hardware cursor
 void hideCursor(){
 	asm("mov ch, 32");
 	asm("mov ah, 1");
@@ -41,6 +42,7 @@ void hideCursor(){
 	asm("int 10h");
 }
 
+// checks if file on disk exists: 0x00 no 0x01 yes
 char fexists(char* filename){
 	char* filelist = getFileList();
 	int probing = 0;
@@ -76,6 +78,7 @@ char fnew(char* filename){
 	return 0x00;
 }
 
+// reads a file in memory. the filename on disk at location buffer. 0x00 failed 0x01 success
 char fread(char* filename,void *location){
 	char* filelist = getFileList();
 	int probing = 0;
@@ -107,6 +110,7 @@ char fread(char* filename,void *location){
 	return loadFileByID(probing,location);
 }
 
+// writes file to disk. where filename is the file to write, location is where the data is and size is the filesize 0x00 failed 0x01 success
 char fwrite(char* filename,void *location,int size){
 	if(fexists(filename)==0){
 		fnew(filename);
@@ -141,14 +145,17 @@ char fwrite(char* filename,void *location,int size){
 	return writeFileByID(probing,location,size);
 }
 
+// write xth file in the FATtable at FAT from buffer with filesize of size. 0x00 = fail | 0x01 = success 
 char writeFileByID(int number,void *targetbuff,int size){
 	char* buffer = (char*) 0x1000;
 	if(readSectorsDeviceLBA(1,0,19,buffer)){
 		int index = 0;
 		char deze = 0x00;
 		int andere = 0;
+		int samatics = 0;
 		for(int i = 1 ; i < 20 ; i++){
 			int semaphore = i*32;
+			samatics = semaphore;
 			if(buffer[semaphore+11]!=0x0f){
 				if(number==index){
 					deze = buffer[semaphore+26];
@@ -160,6 +167,8 @@ char writeFileByID(int number,void *targetbuff,int size){
 		}
 		int prosizeA = (andere/512)+1;
 		int prosizeB = (size/512)+1;
+		buffer[samatics+28] = size;
+		writeSectorsDeviceLBA(1,0,19,buffer);
 		if(prosizeB==prosizeA){
 			return writeSectorsDeviceLBA((andere/512)+1,0,deze+31,targetbuff);
 		}else{
@@ -169,6 +178,7 @@ char writeFileByID(int number,void *targetbuff,int size){
 	return 0x00;
 }
 
+// load xth file in the FATtable at buffer. 0x00 = fail | 0x01 = success 
 char loadFileByID(int number,void *targetbuff){
 	char* buffer = (char*) 0x1000;
 	if(readSectorsDeviceLBA(1,0,19,buffer)){
@@ -191,11 +201,12 @@ char loadFileByID(int number,void *targetbuff){
 	return 0x00;
 }
 
+// let the user choose a selected index of the given ; separated string. index starts at 0
 int choose(char* alpha){
 	int pointer = 0;
 	while(1){
 		cls();
-		setTitle("Selecteer een optie","Pijltjestoetsen: Navigeer | ENTER : Selecteer");
+		setTitle("Select an option","[^] [v] to navigate | [Enter] to select");
 		draw(pointer+1,0,0x70,80);
 		curpos(1,0);
 		int rowpointer = 0;
@@ -239,6 +250,7 @@ int choose(char* alpha){
 	return pointer;
 }
 
+// sets titlebar and bottombar text and clears the screen
 void setTitle(char* front,char* back){
 	curpos(0,0);
 	draw(0 ,0,0x2a,80);
@@ -255,6 +267,7 @@ void setTitle(char* front,char* back){
 	curpos(1,0);
 }
 
+// returns a string with the bootdevice filelist, separated by ;
 char* getFileList(){
 	char* buffer = (char*) 0x1000;
 	char filebuffer[100];
@@ -285,6 +298,7 @@ char* getFileList(){
 	return filebuffer;
 }
 
+// convert LBA to CHS and call writeSectors
 char writeSectorsDeviceLBA(char sectorcount,char device,int lba,void *buffer){
 	char head = 0;
 	char track = 0;
@@ -295,6 +309,7 @@ char writeSectorsDeviceLBA(char sectorcount,char device,int lba,void *buffer){
 	writeSectorsDevice(sectorcount,track,sector,head,device,buffer);
 }
 
+// convert LBA to CHS and call readSectors
 char readSectorsDeviceLBA(char sectorcount,char device,int lba,void *buffer){
 	char head = 0;
 	char track = 0;
@@ -305,6 +320,7 @@ char readSectorsDeviceLBA(char sectorcount,char device,int lba,void *buffer){
 	readSectorsDevice(sectorcount,track,sector,head,device,buffer);
 }
 
+// draw a coloured block at x,y, with color as color and times as width
 void draw(char x,char y,char color,char times){
 	curpos(x,y);
 	asm("mov ah,0x09");
@@ -350,6 +366,7 @@ char readSectorsDevice(char sectorcount,char cylinder,char sector,char head,char
 	}
 }
 
+// write sector
 char writeSectorsDevice(char sectorcount,char cylinder,char sector,char head,char device,void *buffer){
 	if(resetDevice(device)){
 		asm("mov si, [bp+14]");
@@ -372,6 +389,7 @@ char writeSectorsDevice(char sectorcount,char cylinder,char sector,char head,cha
 	}
 }
 
+// reset device
 char resetDevice(char device){
 	asm("mov dl,[bp+4]");
 	asm("mov ax,0");
@@ -382,23 +400,27 @@ char resetDevice(char device){
 	return 0x00;
 }
 
+// get pressed keyboard char
 char getc(){
 	asm("mov ax,0");
 	asm("int 0x16");
 }
 
-
+// get pressed keyboard scancode
 char getsc(){
 	asm("mov ax,0");
 	asm("int 0x16");
 	asm("mov al,ah");
 }
 
+// prints char at cursorposition
 void putc(char a){
 	asm("mov ah,0x0e");
 	asm("int 0x10");
 }
 
+
+// prints string at cursorposition
 void printf(char* text){
 	char deze = 0x00;
 	int i = 0;
@@ -407,6 +429,7 @@ void printf(char* text){
 	}
 }
 
+// Sets cursorposition to x,y
 void curpos(char x,char y){
 	asm("mov ah,0x02");
 	asm("mov dh,[bp+4]");
@@ -415,6 +438,8 @@ void curpos(char x,char y){
 	asm("int 0x10");
 }
 
+
+// Set cursorposition to 0, print screen full of empty spaces and then restore cursorposition to 0 again
 void cls(){
 	asm("mov ah,0x02");
 	asm("mov dh,0");

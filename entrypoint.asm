@@ -3,6 +3,16 @@ jmp _printf
 jmp _putc
 jmp _curpos
 jmp _cls
+jmp _fexists
+jmp _fnew
+jmp _fread
+jmp _fwrite
+jmp _choose
+jmp _setTitle
+jmp _getFileList
+jmp _draw
+jmp _getc
+jmp _getsc
 
 os_main:
 	cli

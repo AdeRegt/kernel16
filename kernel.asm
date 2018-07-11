@@ -55,7 +55,7 @@ _main:
 
 section .rodata
 L6:
-	db	"Bekijken;Uitvoeren;Terug"
+	db	"View;Execute;Back"
 	times	1 db 0
 
 section .text
@@ -100,7 +100,7 @@ section .text
 
 section .rodata
 L12:
-	db	"+ volgende 512 | - vorige 512 | e terug"
+	db	"+ Next 512 | - Previous 512 | e Return"
 	times	1 db 0
 
 section .text
@@ -216,6 +216,13 @@ L7:
 	cmp	ax, 1
 	jne	L23
 ; {
+; RPN'ized expression: "( 1 , 1 curpos ) "
+; Expanded expression: " 1  1  curpos ()4 "
+; Fused expression:    "( 1 , 1 , curpos )4 "
+	push	1
+	push	1
+	call	_curpos
+	sub	sp, -4
 call 0x5000
 ; RPN'ized expression: "( getc ) "
 ; Expanded expression: " getc ()0 "
@@ -950,7 +957,7 @@ section .text
 _writeFileByID:
 	push	bp
 	mov	bp, sp
-	 sub	sp,         12
+	 sub	sp,         14
 ; loc     number : (@4) : int
 ; loc     targetbuff : (@6) : * void
 ; loc     size : (@8) : int
@@ -993,35 +1000,46 @@ _writeFileByID:
 ; Fused expression:    "=(170) *(@-8) 0 "
 	mov	ax, 0
 	mov	[bp-8], ax
-; for
-; loc         i : (@-10) : int
-; RPN'ized expression: "i 1 = "
-; Expanded expression: "(@-10) 1 =(2) "
-; Fused expression:    "=(170) *(@-10) 1 "
-	mov	ax, 1
+; loc         samatics : (@-10) : int
+; RPN'ized expression: "samatics 0 = "
+; Expanded expression: "(@-10) 0 =(2) "
+; Fused expression:    "=(170) *(@-10) 0 "
+	mov	ax, 0
 	mov	[bp-10], ax
+; for
+; loc         i : (@-12) : int
+; RPN'ized expression: "i 1 = "
+; Expanded expression: "(@-12) 1 =(2) "
+; Fused expression:    "=(170) *(@-12) 1 "
+	mov	ax, 1
+	mov	[bp-12], ax
 L94:
 ; RPN'ized expression: "i 20 < "
-; Expanded expression: "(@-10) *(2) 20 < "
-; Fused expression:    "< *(@-10) 20 IF! "
-	mov	ax, [bp-10]
+; Expanded expression: "(@-12) *(2) 20 < "
+; Fused expression:    "< *(@-12) 20 IF! "
+	mov	ax, [bp-12]
 	cmp	ax, 20
 	jge	L97
 ; RPN'ized expression: "i ++p "
-; Expanded expression: "(@-10) ++p(2) "
+; Expanded expression: "(@-12) ++p(2) "
 ; {
-; loc             semaphore : (@-12) : int
+; loc             semaphore : (@-14) : int
 ; RPN'ized expression: "semaphore i 32 * = "
-; Expanded expression: "(@-12) (@-10) *(2) 32 * =(2) "
-; Fused expression:    "* *(@-10) 32 =(170) *(@-12) ax "
-	mov	ax, [bp-10]
+; Expanded expression: "(@-14) (@-12) *(2) 32 * =(2) "
+; Fused expression:    "* *(@-12) 32 =(170) *(@-14) ax "
+	mov	ax, [bp-12]
 	imul	ax, ax, 32
-	mov	[bp-12], ax
+	mov	[bp-14], ax
+; RPN'ized expression: "samatics semaphore = "
+; Expanded expression: "(@-10) (@-14) *(2) =(2) "
+; Fused expression:    "=(170) *(@-10) *(@-14) "
+	mov	ax, [bp-14]
+	mov	[bp-10], ax
 ; if
 ; RPN'ized expression: "buffer semaphore 11 + + *u 15 != "
-; Expanded expression: "(@-2) *(2) (@-12) *(2) 11 + + *(-1) 15 != "
-; Fused expression:    "+ *(@-12) 11 + *(@-2) ax != *ax 15 IF! "
-	mov	ax, [bp-12]
+; Expanded expression: "(@-2) *(2) (@-14) *(2) 11 + + *(-1) 15 != "
+; Fused expression:    "+ *(@-14) 11 + *(@-2) ax != *ax 15 IF! "
+	mov	ax, [bp-14]
 	add	ax, 11
 	mov	cx, ax
 	mov	ax, [bp-2]
@@ -1041,9 +1059,9 @@ L94:
 	jne	L100
 ; {
 ; RPN'ized expression: "deze buffer semaphore 26 + + *u = "
-; Expanded expression: "(@-6) (@-2) *(2) (@-12) *(2) 26 + + *(-1) =(-1) "
-; Fused expression:    "+ *(@-12) 26 + *(@-2) ax =(119) *(@-6) *ax "
-	mov	ax, [bp-12]
+; Expanded expression: "(@-6) (@-2) *(2) (@-14) *(2) 26 + + *(-1) =(-1) "
+; Fused expression:    "+ *(@-14) 26 + *(@-2) ax =(119) *(@-6) *ax "
+	mov	ax, [bp-14]
 	add	ax, 26
 	mov	cx, ax
 	mov	ax, [bp-2]
@@ -1054,9 +1072,9 @@ L94:
 	mov	[bp-6], al
 	cbw
 ; RPN'ized expression: "andere buffer semaphore 28 + + *u = "
-; Expanded expression: "(@-8) (@-2) *(2) (@-12) *(2) 28 + + *(-1) =(2) "
-; Fused expression:    "+ *(@-12) 28 + *(@-2) ax =(167) *(@-8) *ax "
-	mov	ax, [bp-12]
+; Expanded expression: "(@-8) (@-2) *(2) (@-14) *(2) 28 + + *(-1) =(2) "
+; Fused expression:    "+ *(@-14) 28 + *(@-2) ax =(167) *(@-8) *ax "
+	mov	ax, [bp-14]
 	add	ax, 28
 	mov	cx, ax
 	mov	ax, [bp-2]
@@ -1078,37 +1096,58 @@ L100:
 L98:
 ; }
 L95:
-; Fused expression:    "++p(2) *(@-10) "
-	mov	ax, [bp-10]
-	inc	word [bp-10]
+; Fused expression:    "++p(2) *(@-12) "
+	mov	ax, [bp-12]
+	inc	word [bp-12]
 	jmp	L94
 L97:
-; loc         prosizeA : (@-10) : int
+; loc         prosizeA : (@-12) : int
 ; RPN'ized expression: "prosizeA andere 512 / 1 + = "
-; Expanded expression: "(@-10) (@-8) *(2) 512 / 1 + =(2) "
-; Fused expression:    "/ *(@-8) 512 + ax 1 =(170) *(@-10) ax "
+; Expanded expression: "(@-12) (@-8) *(2) 512 / 1 + =(2) "
+; Fused expression:    "/ *(@-8) 512 + ax 1 =(170) *(@-12) ax "
 	mov	ax, [bp-8]
 	cwd
 	mov	cx, 512
 	idiv	cx
 	inc	ax
-	mov	[bp-10], ax
-; loc         prosizeB : (@-12) : int
+	mov	[bp-12], ax
+; loc         prosizeB : (@-14) : int
 ; RPN'ized expression: "prosizeB size 512 / 1 + = "
-; Expanded expression: "(@-12) (@8) *(2) 512 / 1 + =(2) "
-; Fused expression:    "/ *(@8) 512 + ax 1 =(170) *(@-12) ax "
+; Expanded expression: "(@-14) (@8) *(2) 512 / 1 + =(2) "
+; Fused expression:    "/ *(@8) 512 + ax 1 =(170) *(@-14) ax "
 	mov	ax, [bp+8]
 	cwd
 	mov	cx, 512
 	idiv	cx
 	inc	ax
-	mov	[bp-12], ax
+	mov	[bp-14], ax
+; RPN'ized expression: "buffer samatics 28 + + *u size = "
+; Expanded expression: "(@-2) *(2) (@-10) *(2) 28 + + (@8) *(2) =(-1) "
+; Fused expression:    "+ *(@-10) 28 + *(@-2) ax =(122) *ax *(@8) "
+	mov	ax, [bp-10]
+	add	ax, 28
+	mov	cx, ax
+	mov	ax, [bp-2]
+	add	ax, cx
+	mov	bx, ax
+	mov	ax, [bp+8]
+	mov	[bx], al
+	cbw
+; RPN'ized expression: "( buffer , 19 , 0 , 1 writeSectorsDeviceLBA ) "
+; Expanded expression: " (@-2) *(2)  19  0  1  writeSectorsDeviceLBA ()8 "
+; Fused expression:    "( *(2) (@-2) , 19 , 0 , 1 , writeSectorsDeviceLBA )8 "
+	push	word [bp-2]
+	push	19
+	push	0
+	push	1
+	call	_writeSectorsDeviceLBA
+	sub	sp, -8
 ; if
 ; RPN'ized expression: "prosizeB prosizeA == "
-; Expanded expression: "(@-12) *(2) (@-10) *(2) == "
-; Fused expression:    "== *(@-12) *(@-10) IF! "
-	mov	ax, [bp-12]
-	cmp	ax, [bp-10]
+; Expanded expression: "(@-14) *(2) (@-12) *(2) == "
+; Fused expression:    "== *(@-14) *(@-12) IF! "
+	mov	ax, [bp-14]
+	cmp	ax, [bp-12]
 	jne	L102
 ; {
 ; return
@@ -1365,14 +1404,14 @@ L120:
 
 section .rodata
 L122:
-	db	"Selecteer een optie"
+	db	"Select an option"
 	times	1 db 0
 
 section .text
 
 section .rodata
 L123:
-	db	"Pijltjestoetsen: Navigeer | ENTER : Selecteer"
+	db	"[^] [v] to navigate | [Enter] to select"
 	times	1 db 0
 
 section .text
