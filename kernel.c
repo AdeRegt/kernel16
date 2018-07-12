@@ -1,27 +1,35 @@
 // mainloop
 void main(){
 	unsigned char* buffer = (unsigned char*) 0x5000;
+	// setup screen
 	hideCursor();
 	cls();
+	// get filelist and let people choose the right option
 	char* filelist = getFileList();
 	int alpha = choose(filelist);
 	cls();
+	// load file to memory
 	if(loadFileByID(alpha,buffer)){
+		// what you want to do?
 		alpha = choose("View;Execute;Back");
 		cls();
 		if(alpha==0){
+			// view
 			int base = 0;
 			while(1){
 				setTitle("Viewer","+ Next 512 | - Previous 512 | e Return");
+				// dump
 				for(int i = 0 ; i < 512 ; i++){
 					putc(buffer[base+i]);
 				}
 				char x = getc();
+				// move pointer or go back
 				if(x=='+'){base+=512;}
 				if(x=='-'){base-=512;}
 				if(x=='e'){asm("jmp _main");}
 			}
 		}else if(alpha==1){
+			// exec
 			curpos(1,1);
 			asm("call 0x5000");
 		}else if(alpha==2){
@@ -30,6 +38,7 @@ void main(){
 	}else{
 		printf("INIT: Unable to load file");
 	}
+	// reload
 	asm("jmp _main");
 	for(;;);
 }
@@ -49,10 +58,12 @@ char fexists(char* filename){
 	int insmod = 0;
 	while(1){
 		char thx = filelist[insmod];
+		// end of string? halt
 		if(thx==0x00){
 			return 0x00;
 		}
 		int tmp = 1;
+		// next file, if characters are different, set tmp to false
 		for(int i = 0 ; i < 11 ; i++){
 			char X = filelist[insmod++];
 			char Y = filename[i];
@@ -60,9 +71,11 @@ char fexists(char* filename){
 				tmp = 0;
 			}
 		}
+		// if tmp keeps to be true, the filename is the same. go to label second to say it is found
 		if(tmp==1){
 			goto second;
 		}
+		// expects ; or 0x00. if 0x00 halt
 		char X = filelist[insmod++];
 		if(X==0x00){
 			return 0x00;
@@ -89,6 +102,7 @@ char fread(char* filename,void *location){
 			return 0x00;
 		}
 		int tmp = 1;
+		// find filename
 		for(int i = 0 ; i < 11 ; i++){
 			char X = filelist[insmod++];
 			char Y = filename[i];
@@ -107,6 +121,7 @@ char fread(char* filename,void *location){
 	}
 	return 0x00;
 	second:
+	// if found, read file by ID
 	return loadFileByID(probing,location);
 }
 
@@ -124,6 +139,7 @@ char fwrite(char* filename,void *location,int size){
 			return 0x00;
 		}
 		int tmp = 1;
+		// find filename
 		for(int i = 0 ; i < 11 ; i++){
 			char X = filelist[insmod++];
 			char Y = filename[i];
@@ -142,34 +158,43 @@ char fwrite(char* filename,void *location,int size){
 	}
 	return 0x00;
 	second:
+	// write file by ID
 	return writeFileByID(probing,location,size);
 }
 
 // write xth file in the FATtable at FAT from buffer with filesize of size. 0x00 = fail | 0x01 = success 
 char writeFileByID(int number,void *targetbuff,int size){
 	char* buffer = (char*) 0x1000;
+	// read fat into memory
 	if(readSectorsDeviceLBA(1,0,19,buffer)){
 		int index = 0;
 		char deze = 0x00;
 		int andere = 0;
 		int samatics = 0;
+		// parse maximal 20 files
 		for(int i = 1 ; i < 20 ; i++){
-			int semaphore = i*32;
+			int semaphore = i*32;// 32 is one entry size. so select offset of entry
 			samatics = semaphore;
+			// if filetype is anything usefull, continue
 			if(buffer[semaphore+11]!=0x0f){
+				// if it is at the index we want
 				if(number==index){
+					// read location
 					deze = buffer[semaphore+26];
+					// read size
 					andere = buffer[semaphore+28];
 					break;
 				}
 				index++;
 			}
 		}
+		// compare expected size with realsize. if it is the same size of sectors, continue
 		int prosizeA = (andere/512)+1;
 		int prosizeB = (size/512)+1;
 		buffer[samatics+28] = size;
 		writeSectorsDeviceLBA(1,0,19,buffer);
 		if(prosizeB==prosizeA){
+			// if it is the same, continue
 			return writeSectorsDeviceLBA((andere/512)+1,0,deze+31,targetbuff);
 		}else{
 			printf("__SIZE DIFFERENT__");
@@ -181,6 +206,7 @@ char writeFileByID(int number,void *targetbuff,int size){
 // load xth file in the FATtable at buffer. 0x00 = fail | 0x01 = success 
 char loadFileByID(int number,void *targetbuff){
 	char* buffer = (char*) 0x1000;
+	// read sector from FAT
 	if(readSectorsDeviceLBA(1,0,19,buffer)){
 		int index = 0;
 		char deze = 0x00;
@@ -211,6 +237,7 @@ int choose(char* alpha){
 		curpos(1,0);
 		int rowpointer = 0;
 		int beta = 0;
+		// row selected?
 		if(rowpointer==pointer){
 			printf(">>> ");
 		}else{
@@ -218,10 +245,12 @@ int choose(char* alpha){
 		}
 		while(1){
 			char deze = alpha[beta++];
+			// EOF
 			if(deze==0x00){
 				rowpointer++;
 				break;
 			}else if(deze==';'){
+				// new entry -> new line -> set if selected
 				printf("\n\r");
 				rowpointer++;
 				if(rowpointer==pointer){
@@ -251,6 +280,11 @@ int choose(char* alpha){
 }
 
 // sets titlebar and bottombar text and clears the screen
+// TITLE A     X
+//
+// CONTENT
+//
+// TITLE B
 void setTitle(char* front,char* back){
 	curpos(0,0);
 	draw(0 ,0,0x2a,80);
@@ -273,9 +307,11 @@ char* getFileList(){
 	char filebuffer[100];
 	int x = 0;
 	char first = 1;
+	// load FAT
 	if(readSectorsDeviceLBA(1,0,19,buffer)){
 	//if(readSectorsDevice(1,0,2,1,0,buffer)){
 		for(int index = 0 ; index < 20 ; index++){
+			// is file?
 			if(buffer[(index*32)+11]!=0x0f){
 				if(buffer[(index*32)]==0x00){
 					break;
@@ -286,6 +322,7 @@ char* getFileList(){
 					char X = ';';
 					filebuffer[x++] = (X);
 				}
+				// copy filename
 				for(int i = 0 ; i < 11 ; i++){
 					filebuffer[x++] = (buffer[(index*32)+i]);
 				}

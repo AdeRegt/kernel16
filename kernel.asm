@@ -224,10 +224,6 @@ L7:
 	call	_curpos
 	sub	sp, -4
 call 0x5000
-; RPN'ized expression: "( getc ) "
-; Expanded expression: " getc ()0 "
-; Fused expression:    "( getc )0 "
-	call	_getc
 ; }
 	jmp	L24
 L23:
