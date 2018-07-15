@@ -30,7 +30,6 @@ nasm -O0 -w+orphan-labels -f bin -o about.bin about.asm
 echo "   > Fileman"
 smlrc fileman.c fileman.asm
 nasm -O0 -w+orphan-labels -f bin -o fileman.bin fileman.asm
-
 echo ">> Copy system"
 rm -rf mountpoint
 mkdir mountpoint

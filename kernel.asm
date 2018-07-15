@@ -71,10 +71,6 @@ section .text
 	push	L9
 	call	_printf
 	sub	sp, -2
-; RPN'ized expression: "( getc ) "
-; Expanded expression: " getc ()0 "
-; Fused expression:    "( getc )0 "
-	call	_getc
 ; }
 L7:
 ; for
