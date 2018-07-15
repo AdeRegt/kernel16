@@ -1,45 +1,15 @@
 // mainloop
 void main(){
-	unsigned char* buffer = (unsigned char*) 0x5000;
-	// setup screen
 	hideCursor();
-	cls();
-	// get filelist and let people choose the right option
-	char* filelist = getFileList();
-	int alpha = choose(filelist);
-	cls();
-	// load file to memory
-	if(loadFileByID(alpha,buffer)){
-		// what you want to do?
-		alpha = choose("View;Execute;Back");
-		cls();
-		if(alpha==0){
-			// view
-			int base = 0;
-			while(1){
-				setTitle("Viewer","+ Next 512 | - Previous 512 | e Return");
-				// dump
-				for(int i = 0 ; i < 512 ; i++){
-					putc(buffer[base+i]);
-				}
-				char x = getc();
-				// move pointer or go back
-				if(x=='+'){base+=512;}
-				if(x=='-'){base-=512;}
-				if(x=='e'){asm("jmp _main");}
-			}
-		}else if(alpha==1){
-			// exec
-			curpos(1,1);
-			asm("call 0x5000");
-		}else if(alpha==2){
-		
-		}
-	}else{
-		printf("INIT: Unable to load file");
+	if(fread("AUTORUN BIN",0x4000)){
+		asm("call 0x4000");
 	}
-	// reload
-	asm("jmp _main");
+	if(fread("FILEMAN BIN",0x4000)){
+		asm("call 0x4000");
+	}else{
+		printf("Unable to load filemanager");
+	}
+	
 	for(;;);
 }
 

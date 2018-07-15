@@ -1,57 +1,5 @@
 bits 16
 
-org 0x5000
-; glb main : () void
-section .text
-	global	_main
-_main:
-	push	bp
-	mov	bp, sp
-	;sub	sp,          0
-
-section .rodata
-L3:
-	db	"About SanderOS"
-	times	1 db 0
-
-section .text
-
-section .rodata
-L4:
-	db	"Press any key to continue"
-	times	1 db 0
-
-section .text
-; RPN'ized expression: "( L4 , L3 setTitle ) "
-; Expanded expression: " L4  L3  setTitle ()4 "
-; Fused expression:    "( L4 , L3 , setTitle )4 "
-	push	L4
-	push	L3
-	call	_setTitle
-	sub	sp, -4
-
-section .rodata
-L5:
-	db	"Created by:",10,13,"Sander",10,13,"Daniel"
-	times	1 db 0
-
-section .text
-; RPN'ized expression: "( L5 printf ) "
-; Expanded expression: " L5  printf ()2 "
-; Fused expression:    "( L5 , printf )2 "
-	push	L5
-	call	_printf
-	sub	sp, -2
-; RPN'ized expression: "( getc ) "
-; Expanded expression: " getc ()0 "
-; Fused expression:    "( getc )0 "
-	call	_getc
-; Fused expression:    "0  "
-	mov	ax, 0
-L1:
-	leave
-	ret
-
 ; glb printf : (
 ; prm     a : * char
 ;     ) void
@@ -71,7 +19,7 @@ _printf:
 ; loc     <something> : * (
 ; prm         a : * char
 ;         ) void
-; RPN'ized expression: "f 3 (something8) = "
+; RPN'ized expression: "f 3 (something3) = "
 ; Expanded expression: "(@-2) 3 =(2) "
 ; Fused expression:    "=(170) *(@-2) 3 "
 	mov	ax, 3
@@ -83,7 +31,7 @@ _printf:
 	mov	ax, [bp-2]
 	call	ax
 	sub	sp, -2
-L6:
+L1:
 	leave
 	ret
 
@@ -106,7 +54,7 @@ _putc:
 ; loc     <something> : * (
 ; prm         a : char
 ;         ) void
-; RPN'ized expression: "f 6 (something11) = "
+; RPN'ized expression: "f 6 (something6) = "
 ; Expanded expression: "(@-2) 6 =(2) "
 ; Fused expression:    "=(170) *(@-2) 6 "
 	mov	ax, 6
@@ -120,7 +68,7 @@ _putc:
 	mov	ax, [bp-2]
 	call	ax
 	sub	sp, -2
-L9:
+L4:
 	leave
 	ret
 
@@ -148,7 +96,7 @@ _curpos:
 ; prm         a : char
 ; prm         b : char
 ;         ) int
-; RPN'ized expression: "f 9 (something14) = "
+; RPN'ized expression: "f 9 (something9) = "
 ; Expanded expression: "(@-2) 9 =(2) "
 ; Fused expression:    "=(170) *(@-2) 9 "
 	mov	ax, 9
@@ -167,7 +115,7 @@ _curpos:
 	call	ax
 	sub	sp, -4
 	mov	[bp-4], ax
-L12:
+L7:
 	leave
 	ret
 
@@ -181,7 +129,7 @@ _cls:
 ; loc     func : () char
 ; loc     f : (@-2) : * () char
 ; loc     <something> : * () char
-; RPN'ized expression: "f 12 (something17) = "
+; RPN'ized expression: "f 12 (something12) = "
 ; Expanded expression: "(@-2) 12 =(2) "
 ; Fused expression:    "=(170) *(@-2) 12 "
 	mov	ax, 12
@@ -192,7 +140,7 @@ _cls:
 ; Fused expression:    "( *(2) (@-2) )0  "
 	mov	ax, [bp-2]
 	call	ax
-L15:
+L10:
 	leave
 	ret
 
@@ -215,7 +163,7 @@ _fexists:
 ; loc     <something> : * (
 ; prm         a : * char
 ;         ) char
-; RPN'ized expression: "f 15 (something20) = "
+; RPN'ized expression: "f 15 (something15) = "
 ; Expanded expression: "(@-2) 15 =(2) "
 ; Fused expression:    "=(170) *(@-2) 15 "
 	mov	ax, 15
@@ -228,7 +176,7 @@ _fexists:
 	mov	ax, [bp-2]
 	call	ax
 	sub	sp, -2
-L18:
+L13:
 	leave
 	ret
 
@@ -251,7 +199,7 @@ _fnew:
 ; loc     <something> : * (
 ; prm         a : * char
 ;         ) char
-; RPN'ized expression: "f 18 (something23) = "
+; RPN'ized expression: "f 18 (something18) = "
 ; Expanded expression: "(@-2) 18 =(2) "
 ; Fused expression:    "=(170) *(@-2) 18 "
 	mov	ax, 18
@@ -264,7 +212,7 @@ _fnew:
 	mov	ax, [bp-2]
 	call	ax
 	sub	sp, -2
-L21:
+L16:
 	leave
 	ret
 
@@ -292,7 +240,7 @@ _fread:
 ; prm         a : * char
 ; prm         b : * void
 ;         ) char
-; RPN'ized expression: "f 21 (something26) = "
+; RPN'ized expression: "f 21 (something21) = "
 ; Expanded expression: "(@-2) 21 =(2) "
 ; Fused expression:    "=(170) *(@-2) 21 "
 	mov	ax, 21
@@ -306,7 +254,7 @@ _fread:
 	mov	ax, [bp-2]
 	call	ax
 	sub	sp, -4
-L24:
+L19:
 	leave
 	ret
 
@@ -334,7 +282,7 @@ _fwrite:
 ; prm         a : * char
 ; prm         b : * void
 ;         ) char
-; RPN'ized expression: "f 24 (something29) = "
+; RPN'ized expression: "f 24 (something24) = "
 ; Expanded expression: "(@-2) 24 =(2) "
 ; Fused expression:    "=(170) *(@-2) 24 "
 	mov	ax, 24
@@ -348,7 +296,7 @@ _fwrite:
 	mov	ax, [bp-2]
 	call	ax
 	sub	sp, -4
-L27:
+L22:
 	leave
 	ret
 
@@ -371,7 +319,7 @@ _choose:
 ; loc     <something> : * (
 ; prm         a : * char
 ;         ) int
-; RPN'ized expression: "f 27 (something32) = "
+; RPN'ized expression: "f 27 (something27) = "
 ; Expanded expression: "(@-2) 27 =(2) "
 ; Fused expression:    "=(170) *(@-2) 27 "
 	mov	ax, 27
@@ -384,7 +332,7 @@ _choose:
 	mov	ax, [bp-2]
 	call	ax
 	sub	sp, -2
-L30:
+L25:
 	leave
 	ret
 
@@ -412,7 +360,7 @@ _setTitle:
 ; prm         a : * char
 ; prm         b : * char
 ;         ) int
-; RPN'ized expression: "f 30 (something35) = "
+; RPN'ized expression: "f 30 (something30) = "
 ; Expanded expression: "(@-2) 30 =(2) "
 ; Fused expression:    "=(170) *(@-2) 30 "
 	mov	ax, 30
@@ -427,7 +375,7 @@ _setTitle:
 	call	ax
 	sub	sp, -4
 	mov	[bp-4], ax
-L33:
+L28:
 	leave
 	ret
 
@@ -441,7 +389,7 @@ _getFileList:
 ; loc     func : () * char
 ; loc     f : (@-2) : * () * char
 ; loc     <something> : * () * char
-; RPN'ized expression: "f 33 (something38) = "
+; RPN'ized expression: "f 33 (something33) = "
 ; Expanded expression: "(@-2) 33 =(2) "
 ; Fused expression:    "=(170) *(@-2) 33 "
 	mov	ax, 33
@@ -452,7 +400,7 @@ _getFileList:
 ; Fused expression:    "( *(2) (@-2) )0  "
 	mov	ax, [bp-2]
 	call	ax
-L36:
+L31:
 	leave
 	ret
 
@@ -466,7 +414,7 @@ _getc:
 ; loc     func : () char
 ; loc     f : (@-2) : * () char
 ; loc     <something> : * () char
-; RPN'ized expression: "f 39 (something41) = "
+; RPN'ized expression: "f 39 (something36) = "
 ; Expanded expression: "(@-2) 39 =(2) "
 ; Fused expression:    "=(170) *(@-2) 39 "
 	mov	ax, 39
@@ -477,7 +425,7 @@ _getc:
 ; Fused expression:    "( *(2) (@-2) )0  "
 	mov	ax, [bp-2]
 	call	ax
-L39:
+L34:
 	leave
 	ret
 
@@ -491,7 +439,7 @@ _getsc:
 ; loc     func : () char
 ; loc     f : (@-2) : * () char
 ; loc     <something> : * () char
-; RPN'ized expression: "f 42 (something44) = "
+; RPN'ized expression: "f 42 (something39) = "
 ; Expanded expression: "(@-2) 42 =(2) "
 ; Fused expression:    "=(170) *(@-2) 42 "
 	mov	ax, 42
@@ -502,7 +450,7 @@ _getsc:
 ; Fused expression:    "( *(2) (@-2) )0  "
 	mov	ax, [bp-2]
 	call	ax
-L42:
+L37:
 	leave
 	ret
 
@@ -530,7 +478,7 @@ _loadFileByID:
 ; prm         a : int
 ; prm         b : * void
 ;         ) char
-; RPN'ized expression: "f 45 (something47) = "
+; RPN'ized expression: "f 45 (something42) = "
 ; Expanded expression: "(@-2) 45 =(2) "
 ; Fused expression:    "=(170) *(@-2) 45 "
 	mov	ax, 45
@@ -544,7 +492,7 @@ _loadFileByID:
 	mov	ax, [bp-2]
 	call	ax
 	sub	sp, -4
-L45:
+L40:
 	leave
 	ret
 
@@ -577,7 +525,7 @@ _writeFileByID:
 ; prm         b : * void
 ; prm         c : int
 ;         ) char
-; RPN'ized expression: "f 48 (something50) = "
+; RPN'ized expression: "f 48 (something45) = "
 ; Expanded expression: "(@-2) 48 =(2) "
 ; Fused expression:    "=(170) *(@-2) 48 "
 	mov	ax, 48
@@ -592,14 +540,14 @@ _writeFileByID:
 	mov	ax, [bp-2]
 	call	ax
 	sub	sp, -6
-L48:
+L43:
 	leave
 	ret
 
 
 
 ; Syntax/declaration table/stack:
-; Bytes used: 615/15360
+; Bytes used: 595/15360
 
 
 ; Macro table:
@@ -622,7 +570,6 @@ L48:
 ; Ident __divsf3
 ; Ident __lesf2
 ; Ident __gesf2
-; Ident main
 ; Ident printf
 ; Ident a
 ; Ident putc
@@ -641,7 +588,7 @@ L48:
 ; Ident loadFileByID
 ; Ident writeFileByID
 ; Ident c
-; Bytes used: 268/5632
+; Bytes used: 262/5632
 
-; Next label number: 51
+; Next label number: 46
 ; Compilation succeeded.

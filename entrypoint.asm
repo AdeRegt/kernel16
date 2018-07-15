@@ -13,6 +13,8 @@ jmp _getFileList
 jmp _draw
 jmp _getc
 jmp _getsc
+jmp _loadFileByID
+jmp _writeFileByID
 
 os_main:
 	cli
