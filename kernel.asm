@@ -71,6 +71,10 @@ section .text
 	push	L9
 	call	_printf
 	sub	sp, -2
+; RPN'ized expression: "( getc ) "
+; Expanded expression: " getc ()0 "
+; Fused expression:    "( getc )0 "
+	call	_getc
 ; }
 L7:
 ; for
@@ -1541,6 +1545,14 @@ _setTitle:
 	 sub	sp,          2
 ; loc     front : (@4) : * char
 ; loc     back : (@6) : * char
+; RPN'ized expression: "( hideCursor ) "
+; Expanded expression: " hideCursor ()0 "
+; Fused expression:    "( hideCursor )0 "
+	call	_hideCursor
+; RPN'ized expression: "( cls ) "
+; Expanded expression: " cls ()0 "
+; Fused expression:    "( cls )0 "
+	call	_cls
 ; RPN'ized expression: "( 0 , 0 curpos ) "
 ; Expanded expression: " 0  0  curpos ()4 "
 ; Fused expression:    "( 0 , 0 , curpos )4 "

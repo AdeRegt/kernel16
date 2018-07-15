@@ -256,6 +256,9 @@ int choose(char* alpha){
 //
 // TITLE B
 void setTitle(char* front,char* back){
+	// setup screen
+	hideCursor();
+	cls();
 	curpos(0,0);
 	draw(0 ,0,0x2a,80);
 	for(int i = 1 ; i < 24 ; i++){
